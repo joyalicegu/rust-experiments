@@ -1,4 +1,6 @@
 use minifb::{Key, Window, WindowOptions};
+use std::thread;
+use std::time::Duration;
 
 const WIDTH: usize = 1200;
 const HEIGHT: usize = 800;
@@ -10,16 +12,15 @@ fn to_bgra(color: (f64, f64, f64)) -> u32 {
     255 << 24 | r << 16 | g << 8 | b
 }
 
-fn render(width: usize, height: usize) -> Vec<u32> {
-    let mut framebuffer = vec![0; width * height];
+fn update_framebuffer(framebuffer: &mut Vec<u32>, width: usize, height: usize, t: f64) -> () {
     for y in 0..height {
         for x in 0..width {
             // just do a gradient
             let color = (y as f64 / height as f64, x as f64 / width as f64, 0 as f64);
-            framebuffer[y * width + x] = to_bgra(color);
+            let yt = (y + ((t * height as f64) as usize)) % height;
+            framebuffer[yt * width + x] = to_bgra(color);
         }
     }
-    framebuffer
 }
 
 fn main() {
@@ -34,13 +35,21 @@ fn main() {
         panic!("{}", e);
     });
 
-    println!("Populating a framebuffer...");
-    let framebuffer = render(WIDTH, HEIGHT);
+    println!("Creating a framebuffer...");
+    let mut framebuffer = vec![0; WIDTH * HEIGHT];
 
+    let mut t: f64 = 0.0;
     println!("Opening a window...");
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        update_framebuffer(&mut framebuffer, WIDTH, HEIGHT, t);
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
             .unwrap();
+        if t >= 1.0 {
+            t = 0.0;
+        } else {
+            t += 0.05;
+        }
+        thread::sleep(Duration::from_millis(20));
     }
 }
