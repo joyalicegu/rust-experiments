@@ -5,14 +5,30 @@ use std::time::Duration;
 
 const WIDTH: usize = 1200;
 const HEIGHT: usize = 800;
-const SEGMENT_LENGTH: usize = 5;
+const SEGMENT_LENGTH: usize = 1;
 const INTERVAL_MILLIS: u64 = 1;
+
+// colors
+const WHITE: (f64, f64, f64) = (1.0, 1.0, 1.0);
+const RED: (f64, f64, f64) = (1.0, 0.0, 0.0);
+const YELLOW: (f64, f64, f64) = (1.0, 1.0, 0.0);
+const GREEN: (f64, f64, f64) = (0.0, 1.0, 0.0);
+const CYAN: (f64, f64, f64) = (0.0, 1.0, 1.0);
+const BLUE: (f64, f64, f64) = (0.0, 0.0, 1.0);
+const MAGENTA: (f64, f64, f64) = (1.0, 0.0, 1.0);
 
 pub struct State {
     turn_index: usize,
     position: (isize, isize),  // pixel coordinates
     direction: (isize, isize), // position + direction = next position
     segment_progress: usize,   // number of pixels into a segment
+    t: usize,                  // number of pixels into the curve
+}
+
+#[derive(Clone, Copy)]
+pub struct GradientStop {
+    depth: f64,
+    color: (f64, f64, f64),
 }
 
 #[derive(Clone, Copy)]
@@ -35,6 +51,28 @@ fn to_bgra(color: (f64, f64, f64)) -> u32 {
     255 << 24 | r << 16 | g << 8 | b
 }
 
+fn lerp_f64(u: f64, v: f64, t: f64) -> f64 {
+    v * t + u * (1.0 - t)
+}
+
+fn lerp_color(u: (f64, f64, f64), v: (f64, f64, f64), t: f64) -> (f64, f64, f64) {
+    (
+        lerp_f64(u.0, v.0, t),
+        lerp_f64(u.1, v.1, t),
+        lerp_f64(u.2, v.2, t),
+    )
+}
+
+fn get_gradient_color(gradient: &Vec<GradientStop>, depth: f64) -> (f64, f64, f64) {
+    for i in 1..gradient.len() {
+        if gradient[i].depth >= depth {
+            let t = (depth - gradient[i - 1].depth) / (gradient[i].depth - gradient[i - 1].depth);
+            return lerp_color(gradient[i - 1].color, gradient[i].color, t);
+        }
+    }
+    panic!("Failed to get gradient color");
+}
+
 fn update(
     framebuffer: &mut Vec<u32>,
     width: isize,
@@ -42,12 +80,14 @@ fn update(
     segment_length: usize,
     state: &mut State,
     turns: &Vec<Turn>,
+    gradient: &Vec<GradientStop>,
 ) -> () {
     if state.turn_index >= turns.len() {
         return;
     }
     // update framebuffer
-    let color = (1.0, 1.0, 1.0);
+    let gradient_depth = (state.t % 360) as f64 / 360.0;
+    let color = get_gradient_color(&gradient, gradient_depth);
     if state.position.0 >= 0
         && state.position.1 >= 0
         && state.position.0 < width
@@ -56,6 +96,7 @@ fn update(
         framebuffer[(state.position.0 + state.position.1 * width) as usize] = to_bgra(color);
     }
     // update state
+    state.t += 1;
     state.segment_progress += 1;
     state.position.0 += state.direction.0;
     state.position.1 += state.direction.1;
@@ -107,10 +148,53 @@ fn main() {
         ),
         direction: (1, 0),
         segment_progress: 0,
+        t: 0,
     };
 
     println!("Initializing turn sequence...");
     let mut turns = vec![Turn::R]; // base case
+
+    let solid_gradient = vec![
+        GradientStop {
+            depth: 0.0,
+            color: WHITE,
+        },
+        GradientStop {
+            depth: 1.0,
+            color: WHITE,
+        },
+    ];
+
+    let hsv_gradient = vec![
+        GradientStop {
+            depth: 0.0,
+            color: RED,
+        },
+        GradientStop {
+            depth: 1.0 / 6.0,
+            color: YELLOW,
+        },
+        GradientStop {
+            depth: 2.0 / 6.0,
+            color: GREEN,
+        },
+        GradientStop {
+            depth: 3.0 / 6.0,
+            color: CYAN,
+        },
+        GradientStop {
+            depth: 4.0 / 6.0,
+            color: BLUE,
+        },
+        GradientStop {
+            depth: 5.0 / 6.0,
+            color: MAGENTA,
+        },
+        GradientStop {
+            depth: 1.0,
+            color: RED,
+        },
+    ];
 
     println!("Opening a window...");
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -124,6 +208,7 @@ fn main() {
             SEGMENT_LENGTH,
             &mut state,
             &turns,
+            &hsv_gradient,
         );
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
