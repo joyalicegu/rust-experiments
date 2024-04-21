@@ -70,7 +70,7 @@ fn get_gradient_color(gradient: &Vec<GradientStop>, depth: f64) -> (f64, f64, f6
             return lerp_color(gradient[i - 1].color, gradient[i].color, t);
         }
     }
-    panic!("Failed to get gradient color");
+    panic!("Invalid gradient depth: {:?}", depth);
 }
 
 fn update(
@@ -86,8 +86,9 @@ fn update(
         return;
     }
     // update framebuffer
-    let gradient_depth = (state.t % 360) as f64 / 360.0;
-    let color = get_gradient_color(&gradient, gradient_depth);
+    let mut d = (state.t as f64 + 1.0).log2();
+    d -= d.floor();
+    let color = get_gradient_color(&gradient, d);
     if state.position.0 >= 0
         && state.position.1 >= 0
         && state.position.0 < width
@@ -201,18 +202,19 @@ fn main() {
         if state.turn_index >= turns.len() {
             turns = next_turn_sequence(&turns);
         }
-        update(
-            &mut framebuffer,
-            WIDTH.try_into().unwrap(),
-            HEIGHT.try_into().unwrap(),
-            SEGMENT_LENGTH,
-            &mut state,
-            &turns,
-            &hsv_gradient,
-        );
+        while state.turn_index < turns.len() {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state,
+                &turns,
+                &hsv_gradient,
+            );
+        }
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
             .unwrap();
-        thread::sleep(Duration::from_millis(INTERVAL_MILLIS));
     }
 }
