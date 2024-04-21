@@ -5,3 +5,13 @@ Co-authored by [Tom Wildenhain](https://github.com/tomwildenhain), who has also 
 Coded during Rust meetup at Hacker Dojo while eating pie.
 
 ![screenshot](screenshots/monochrome-with-segment-length-5.png)
+
+![screenshot](screenshots/rainbow-1.png)
+
+![screenshot](screenshots/rainbow-2.png)
+
+![screenshot](screenshots/rainbow-3.png)
+
+![screenshot](screenshots/rainbow-with-2-curves.png)
+
+![screenshot](screenshots/rainbow-with-4-curves.png)
