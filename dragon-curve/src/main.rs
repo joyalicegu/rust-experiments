@@ -151,6 +151,36 @@ fn main() {
         segment_progress: 0,
         t: 0,
     };
+    let mut state2 = State {
+        turn_index: 0,
+        position: (
+            ((WIDTH / 2) as isize).try_into().unwrap(),
+            ((HEIGHT / 2) as isize).try_into().unwrap(),
+        ),
+        direction: (-1, 0),
+        segment_progress: 0,
+        t: 0,
+    };
+    let mut state3 = State {
+        turn_index: 0,
+        position: (
+            ((WIDTH / 2) as isize).try_into().unwrap(),
+            ((HEIGHT / 2) as isize).try_into().unwrap(),
+        ),
+        direction: (0, -1),
+        segment_progress: 0,
+        t: 0,
+    };
+    let mut state4 = State {
+        turn_index: 0,
+        position: (
+            ((WIDTH / 2) as isize).try_into().unwrap(),
+            ((HEIGHT / 2) as isize).try_into().unwrap(),
+        ),
+        direction: (0, 1),
+        segment_progress: 0,
+        t: 0,
+    };
 
     println!("Initializing turn sequence...");
     let mut turns = vec![Turn::R]; // base case
@@ -209,6 +239,48 @@ fn main() {
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state,
+                &turns,
+                &hsv_gradient,
+            );
+        }
+        if state2.turn_index >= turns.len() {
+            turns = next_turn_sequence(&turns);
+        }
+        while state2.turn_index < turns.len() {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state2,
+                &turns,
+                &hsv_gradient,
+            );
+        }
+        if state3.turn_index >= turns.len() {
+            turns = next_turn_sequence(&turns);
+        }
+        while state3.turn_index < turns.len() {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state3,
+                &turns,
+                &hsv_gradient,
+            );
+        }
+        if state4.turn_index >= turns.len() {
+            turns = next_turn_sequence(&turns);
+        }
+        while state4.turn_index < turns.len() {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state4,
                 &turns,
                 &hsv_gradient,
             );
