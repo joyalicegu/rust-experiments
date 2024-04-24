@@ -63,6 +63,23 @@ fn lerp_color(u: (f64, f64, f64), v: (f64, f64, f64), t: f64) -> (f64, f64, f64)
     )
 }
 
+fn two_color_gradient(a: (f64, f64, f64), b: (f64, f64, f64)) -> Vec<GradientStop> {
+    vec![
+        GradientStop {
+            depth: 0.0,
+            color: a,
+        },
+        GradientStop {
+            depth: 1.0 / 2.0,
+            color: b,
+        },
+        GradientStop {
+            depth: 1.0,
+            color: a,
+        },
+    ]
+}
+
 fn get_gradient_color(gradient: &Vec<GradientStop>, depth: f64) -> (f64, f64, f64) {
     for i in 1..gradient.len() {
         if gradient[i].depth >= depth {
@@ -157,7 +174,7 @@ fn main() {
             ((WIDTH / 2) as isize).try_into().unwrap(),
             ((HEIGHT / 2) as isize).try_into().unwrap(),
         ),
-        direction: (-1, 0),
+        direction: (0, 1),
         segment_progress: 0,
         t: 0,
     };
@@ -167,7 +184,7 @@ fn main() {
             ((WIDTH / 2) as isize).try_into().unwrap(),
             ((HEIGHT / 2) as isize).try_into().unwrap(),
         ),
-        direction: (0, -1),
+        direction: (-1, 0),
         segment_progress: 0,
         t: 0,
     };
@@ -177,7 +194,7 @@ fn main() {
             ((WIDTH / 2) as isize).try_into().unwrap(),
             ((HEIGHT / 2) as isize).try_into().unwrap(),
         ),
-        direction: (0, 1),
+        direction: (0, -1),
         segment_progress: 0,
         t: 0,
     };
@@ -240,7 +257,10 @@ fn main() {
                 SEGMENT_LENGTH,
                 &mut state,
                 &turns,
-                &hsv_gradient,
+                &two_color_gradient(
+                    RED,
+                    (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
+                ),
             );
         }
         if state2.turn_index >= turns.len() {
@@ -254,7 +274,10 @@ fn main() {
                 SEGMENT_LENGTH,
                 &mut state2,
                 &turns,
-                &hsv_gradient,
+                &two_color_gradient(
+                    (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
+                    (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
+                ),
             );
         }
         if state3.turn_index >= turns.len() {
@@ -268,7 +291,14 @@ fn main() {
                 SEGMENT_LENGTH,
                 &mut state3,
                 &turns,
-                &hsv_gradient,
+                &two_color_gradient(
+                    (
+                        153.0 / 255.0 / 5.0,
+                        204.0 / 255.0 / 5.0,
+                        255.0 / 255.0 / 5.0,
+                    ),
+                    (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // 00b0f0
+                ),
             );
         }
         if state4.turn_index >= turns.len() {
@@ -282,7 +312,7 @@ fn main() {
                 SEGMENT_LENGTH,
                 &mut state4,
                 &turns,
-                &hsv_gradient,
+                &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
             );
         }
         window
