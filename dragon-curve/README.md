@@ -15,3 +15,11 @@ Coded during Rust meetup at Hacker Dojo while eating pie.
 ![screenshot](screenshots/rainbow-with-2-curves.png)
 
 ![screenshot](screenshots/rainbow-with-4-curves.png)
+
+![screenshot](screenshots/four-spirals-1.png)
+
+![screenshot](screenshots/four-spirals-2.png)
+
+![screenshot](screenshots/four-spirals-3.png)
+
+![screenshot](screenshots/four-spirals-4.png)
