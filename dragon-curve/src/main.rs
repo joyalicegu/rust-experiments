@@ -25,6 +25,21 @@ pub struct State {
     t: usize,                  // number of pixels into the curve
 }
 
+impl State {
+    fn new(direction: (isize, isize)) -> State {
+        return State {
+            turn_index: 0,
+            position: (
+                ((WIDTH / 2) as isize).try_into().unwrap(),
+                ((HEIGHT / 2) as isize).try_into().unwrap(),
+            ),
+            direction: direction,
+            segment_progress: 0,
+            t: 0,
+        };
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct GradientStop {
     depth: f64,
@@ -158,46 +173,10 @@ fn main() {
     let mut framebuffer = vec![0; WIDTH * HEIGHT];
 
     println!("Initializing state...");
-    let mut state = State {
-        turn_index: 0,
-        position: (
-            ((WIDTH / 2) as isize).try_into().unwrap(),
-            ((HEIGHT / 2) as isize).try_into().unwrap(),
-        ),
-        direction: (1, 0),
-        segment_progress: 0,
-        t: 0,
-    };
-    let mut state2 = State {
-        turn_index: 0,
-        position: (
-            ((WIDTH / 2) as isize).try_into().unwrap(),
-            ((HEIGHT / 2) as isize).try_into().unwrap(),
-        ),
-        direction: (0, 1),
-        segment_progress: 0,
-        t: 0,
-    };
-    let mut state3 = State {
-        turn_index: 0,
-        position: (
-            ((WIDTH / 2) as isize).try_into().unwrap(),
-            ((HEIGHT / 2) as isize).try_into().unwrap(),
-        ),
-        direction: (-1, 0),
-        segment_progress: 0,
-        t: 0,
-    };
-    let mut state4 = State {
-        turn_index: 0,
-        position: (
-            ((WIDTH / 2) as isize).try_into().unwrap(),
-            ((HEIGHT / 2) as isize).try_into().unwrap(),
-        ),
-        direction: (0, -1),
-        segment_progress: 0,
-        t: 0,
-    };
+    let mut state = State::new((1, 0));
+    let mut state2 = State::new((0, 1));
+    let mut state3 = State::new((-1, 0));
+    let mut state4 = State::new((0, -1));
 
     println!("Initializing turn sequence...");
     let mut turns = vec![Turn::R]; // base case
