@@ -152,11 +152,24 @@ fn update(
     // update state
     state.t += 1;
     state.segment_progress += 1;
+
     state.position.0 += state.direction.0;
     state.position.1 += state.direction.1;
     if state.segment_progress >= segment_length {
-        state.direction = turn(state.direction, turns[state.turn_index]);
-        state.turn_index += 1;
+        // let current_turn = turns[state.turn_index];
+
+        let a = state.turn_counter;
+        state.turn_counter += 1;
+        let b = state.turn_counter;
+        let c = a ^ b;
+        let d = (c + 1) >> 1;
+        let e = (state.turn_state & d) != 0;
+        state.turn_state ^= d;
+
+        let current_turn = if e {Turn::L} else {Turn::R};
+
+        state.direction = turn(state.direction, current_turn);
+        // state.turn_index += 1;
         state.segment_progress = 0;
     }
 }
@@ -269,28 +282,28 @@ fn main() {
             iteration += 1;
         }
 
-        // if state2.turn_index >= turns.len() {
-        //     turns = next_turn_sequence(&turns);
-        // }
-        // let mut iteration: usize = 0;
-        // loop {
-        //     update(
-        //         &mut framebuffer,
-        //         WIDTH.try_into().unwrap(),
-        //         HEIGHT.try_into().unwrap(),
-        //         SEGMENT_LENGTH,
-        //         &mut state2,
-        //         &turns,
-        //         &two_color_gradient(
-        //             (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
-        //             (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
-        //         ),
-        //     );
-        //     if if USE_FULL_ITERATIONS {state2.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-        //         break;
-        //     }
-        //     iteration += 1;
-        // }
+        if state2.turn_index >= turns.len() {
+            turns = next_turn_sequence(&turns);
+        }
+        let mut iteration: usize = 0;
+        loop {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state2,
+                &turns,
+                &two_color_gradient(
+                    (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
+                    (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
+                ),
+            );
+            if if USE_FULL_ITERATIONS {state2.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+                break;
+            }
+            iteration += 1;
+        }
 
         if state3.turn_index >= turns.len() {
             turns = next_turn_sequence(&turns);
@@ -319,25 +332,25 @@ fn main() {
             iteration += 1;
         }
 
-        // if state4.turn_index >= turns.len() {
-        //     turns = next_turn_sequence(&turns);
-        // }
-        // let mut iteration: usize = 0;
-        // loop {
-        //     update(
-        //         &mut framebuffer,
-        //         WIDTH.try_into().unwrap(),
-        //         HEIGHT.try_into().unwrap(),
-        //         SEGMENT_LENGTH,
-        //         &mut state4,
-        //         &turns,
-        //         &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
-        //     );
-        //     if if USE_FULL_ITERATIONS {state4.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-        //         break;
-        //     }
-        //     iteration += 1;
-        // }
+        if state4.turn_index >= turns.len() {
+            turns = next_turn_sequence(&turns);
+        }
+        let mut iteration: usize = 0;
+        loop {
+            update(
+                &mut framebuffer,
+                WIDTH.try_into().unwrap(),
+                HEIGHT.try_into().unwrap(),
+                SEGMENT_LENGTH,
+                &mut state4,
+                &turns,
+                &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
+            );
+            if if USE_FULL_ITERATIONS {state4.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+                break;
+            }
+            iteration += 1;
+        }
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
             .unwrap();
