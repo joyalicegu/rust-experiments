@@ -132,12 +132,8 @@ fn update(
     height: isize,
     segment_length: usize,
     state: &mut State,
-    turns: &Vec<Turn>,
     gradient: &Vec<GradientStop>,
 ) -> () {
-    if state.turn_index >= turns.len() {
-        return;
-    }
     // update framebuffer
     let mut d = (state.t as f64 + 1.0).log2();
     d -= d.floor();
@@ -259,64 +255,41 @@ fn main() {
 
     println!("Opening a window...");
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        if state.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        let mut iteration: usize = 0;
-        loop {
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state,
-                &turns,
                 &two_color_gradient(
                     RED,
                     (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
                 ),
             );
-            if if USE_FULL_ITERATIONS {state.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-                break;
-            }
-            iteration += 1;
         }
 
-        if state2.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        let mut iteration: usize = 0;
-        loop {
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state2,
-                &turns,
                 &two_color_gradient(
                     (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
                     (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
                 ),
             );
-            if if USE_FULL_ITERATIONS {state2.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-                break;
-            }
-            iteration += 1;
         }
 
-        if state3.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        let mut iteration: usize = 0;
-        loop {
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state3,
-                &turns,
                 &two_color_gradient(
                     (
                         153.0 / 255.0 / 5.0,
@@ -326,30 +299,17 @@ fn main() {
                     (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // 00b0f0
                 ),
             );
-            if if USE_FULL_ITERATIONS {state3.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-                break;
-            }
-            iteration += 1;
         }
 
-        if state4.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        let mut iteration: usize = 0;
-        loop {
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state4,
-                &turns,
                 &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
             );
-            if if USE_FULL_ITERATIONS {state4.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
-                break;
-            }
-            iteration += 1;
         }
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
