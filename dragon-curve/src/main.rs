@@ -7,6 +7,7 @@ const WIDTH: usize = 1200;
 const HEIGHT: usize = 800;
 const SEGMENT_LENGTH: usize = 1;
 const INTERVAL_MILLIS: u64 = 1;
+const BATCH_SIZE: usize = 1000;
 
 // colors
 const WHITE: (f64, f64, f64) = (1.0, 1.0, 1.0);
@@ -18,17 +19,17 @@ const BLUE: (f64, f64, f64) = (0.0, 0.0, 1.0);
 const MAGENTA: (f64, f64, f64) = (1.0, 0.0, 1.0);
 
 pub struct State {
-    turn_index: usize,
     position: (isize, isize),  // pixel coordinates
     direction: (isize, isize), // position + direction = next position
     segment_progress: usize,   // number of pixels into a segment
     t: usize,                  // number of pixels into the curve
+    turn_counter: i64,
+    turn_state: i64,
 }
 
 impl State {
     fn new(direction: (isize, isize)) -> State {
         return State {
-            turn_index: 0,
             position: (
                 ((WIDTH / 2) as isize).try_into().unwrap(),
                 ((HEIGHT / 2) as isize).try_into().unwrap(),
@@ -36,6 +37,8 @@ impl State {
             direction: direction,
             segment_progress: 0,
             t: 0,
+            turn_counter: 0,
+            turn_state: 0,
         };
     }
 }
@@ -111,12 +114,8 @@ fn update(
     height: isize,
     segment_length: usize,
     state: &mut State,
-    turns: &Vec<Turn>,
     gradient: &Vec<GradientStop>,
 ) -> () {
-    if state.turn_index >= turns.len() {
-        return;
-    }
     // update framebuffer
     let mut d = (state.t as f64 + 1.0).log2();
     d -= d.floor();
@@ -131,11 +130,21 @@ fn update(
     // update state
     state.t += 1;
     state.segment_progress += 1;
+
     state.position.0 += state.direction.0;
     state.position.1 += state.direction.1;
     if state.segment_progress >= segment_length {
-        state.direction = turn(state.direction, turns[state.turn_index]);
-        state.turn_index += 1;
+        let a = state.turn_counter;
+        state.turn_counter += 1;
+        let b = state.turn_counter;
+        let c = a ^ b;
+        let d = (c + 1) >> 1;
+        let e = (state.turn_state & d) != 0;
+        state.turn_state ^= d;
+
+        let current_turn = if e { Turn::L } else { Turn::R };
+
+        state.direction = turn(state.direction, current_turn);
         state.segment_progress = 0;
     }
 }
@@ -225,51 +234,41 @@ fn main() {
 
     println!("Opening a window...");
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        if state.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state.turn_index < turns.len() {
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state,
-                &turns,
                 &two_color_gradient(
                     RED,
                     (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
                 ),
             );
         }
-        if state2.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state2.turn_index < turns.len() {
+
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state2,
-                &turns,
                 &two_color_gradient(
                     (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
                     (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
                 ),
             );
         }
-        if state3.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state3.turn_index < turns.len() {
+
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state3,
-                &turns,
                 &two_color_gradient(
                     (
                         153.0 / 255.0 / 5.0,
@@ -280,17 +279,14 @@ fn main() {
                 ),
             );
         }
-        if state4.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state4.turn_index < turns.len() {
+
+        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
                 HEIGHT.try_into().unwrap(),
                 SEGMENT_LENGTH,
                 &mut state4,
-                &turns,
                 &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
             );
         }
