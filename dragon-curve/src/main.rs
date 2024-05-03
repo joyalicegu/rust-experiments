@@ -134,16 +134,19 @@ fn update(
     state.position.0 += state.direction.0;
     state.position.1 += state.direction.1;
     if state.segment_progress >= segment_length {
-        let a = state.turn_counter;
+        // bits that differ when you increment the turn counter
+        let bits = state.turn_counter ^ (state.turn_counter + 1);
+        // most significant bit
+        let bit = (bits + 1) >> 1;
+
+        let current_turn = if (state.turn_state & bit) != 0 {
+            Turn::L
+        } else {
+            Turn::R
+        };
+
+        state.turn_state ^= bit; // flip the bit
         state.turn_counter += 1;
-        let b = state.turn_counter;
-        let c = a ^ b;
-        let d = (c + 1) >> 1;
-        let e = (state.turn_state & d) != 0;
-        state.turn_state ^= d;
-
-        let current_turn = if e { Turn::L } else { Turn::R };
-
         state.direction = turn(state.direction, current_turn);
         state.segment_progress = 0;
     }
