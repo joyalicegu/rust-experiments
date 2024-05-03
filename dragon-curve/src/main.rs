@@ -1,12 +1,8 @@
 use minifb::{Key, Window, WindowOptions};
-use std::iter;
-use std::thread;
-use std::time::Duration;
 
 const WIDTH: usize = 1200;
 const HEIGHT: usize = 800;
 const SEGMENT_LENGTH: usize = 1;
-const INTERVAL_MILLIS: u64 = 1;
 const BATCH_SIZE: usize = 1000;
 
 // colors
@@ -152,23 +148,6 @@ fn update(
     }
 }
 
-fn flip(turn: Turn) -> Turn {
-    match turn {
-        Turn::L => Turn::R,
-        Turn::R => Turn::L,
-    }
-}
-
-fn next_turn_sequence(turns: &Vec<Turn>) -> Vec<Turn> {
-    let turn_flipped = turns.into_iter().rev().map(|&t| flip(t));
-    return turns
-        .clone()
-        .into_iter()
-        .chain(iter::once(Turn::R))
-        .chain(turn_flipped)
-        .collect();
-}
-
 fn main() {
     println!("Creating a window...");
     let mut window = Window::new(
@@ -190,10 +169,7 @@ fn main() {
     let mut state3 = State::new((-1, 0));
     let mut state4 = State::new((0, -1));
 
-    println!("Initializing turn sequence...");
-    let mut turns = vec![Turn::R]; // base case
-
-    let solid_gradient = vec![
+    let _solid_gradient = vec![
         GradientStop {
             depth: 0.0,
             color: WHITE,
@@ -204,7 +180,7 @@ fn main() {
         },
     ];
 
-    let hsv_gradient = vec![
+    let _hsv_gradient = vec![
         GradientStop {
             depth: 0.0,
             color: RED,
@@ -237,7 +213,7 @@ fn main() {
 
     println!("Opening a window...");
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        for i in 0..BATCH_SIZE {
+        for _ in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
@@ -249,9 +225,7 @@ fn main() {
                     (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
                 ),
             );
-        }
 
-        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
@@ -263,9 +237,7 @@ fn main() {
                     (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
                 ),
             );
-        }
 
-        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
@@ -281,9 +253,7 @@ fn main() {
                     (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // 00b0f0
                 ),
             );
-        }
 
-        for i in 0..BATCH_SIZE {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
