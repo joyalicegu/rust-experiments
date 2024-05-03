@@ -7,6 +7,8 @@ const WIDTH: usize = 1200;
 const HEIGHT: usize = 800;
 const SEGMENT_LENGTH: usize = 1;
 const INTERVAL_MILLIS: u64 = 1;
+const USE_FULL_ITERATIONS: bool = false;
+const BATCH_SIZE: usize = 10000;
 
 // colors
 const WHITE: (f64, f64, f64) = (1.0, 1.0, 1.0);
@@ -23,6 +25,25 @@ pub struct State {
     direction: (isize, isize), // position + direction = next position
     segment_progress: usize,   // number of pixels into a segment
     t: usize,                  // number of pixels into the curve
+    turn_counter: i64,
+    turn_state: i64
+}
+
+impl State{
+    fn new(direction: (isize, isize)) -> State {
+        return State {
+            turn_index: 0,
+            position: (
+                ((WIDTH / 2) as isize).try_into().unwrap(),
+                ((HEIGHT / 2) as isize).try_into().unwrap(),
+            ),
+            direction: direction,
+            segment_progress: 0,
+            t: 0,
+            turn_counter: 0,
+            turn_state: 0,
+        };
+    }
 }
 
 impl State {
@@ -228,7 +249,8 @@ fn main() {
         if state.turn_index >= turns.len() {
             turns = next_turn_sequence(&turns);
         }
-        while state.turn_index < turns.len() {
+        let mut iteration: usize = 0;
+        loop {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
@@ -241,28 +263,40 @@ fn main() {
                     (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
                 ),
             );
+            if if USE_FULL_ITERATIONS {state.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+                break;
+            }
+            iteration += 1;
         }
-        if state2.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state2.turn_index < turns.len() {
-            update(
-                &mut framebuffer,
-                WIDTH.try_into().unwrap(),
-                HEIGHT.try_into().unwrap(),
-                SEGMENT_LENGTH,
-                &mut state2,
-                &turns,
-                &two_color_gradient(
-                    (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
-                    (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
-                ),
-            );
-        }
+
+        // if state2.turn_index >= turns.len() {
+        //     turns = next_turn_sequence(&turns);
+        // }
+        // let mut iteration: usize = 0;
+        // loop {
+        //     update(
+        //         &mut framebuffer,
+        //         WIDTH.try_into().unwrap(),
+        //         HEIGHT.try_into().unwrap(),
+        //         SEGMENT_LENGTH,
+        //         &mut state2,
+        //         &turns,
+        //         &two_color_gradient(
+        //             (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
+        //             (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
+        //         ),
+        //     );
+        //     if if USE_FULL_ITERATIONS {state2.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+        //         break;
+        //     }
+        //     iteration += 1;
+        // }
+
         if state3.turn_index >= turns.len() {
             turns = next_turn_sequence(&turns);
         }
-        while state3.turn_index < turns.len() {
+        let mut iteration: usize = 0;
+        loop {
             update(
                 &mut framebuffer,
                 WIDTH.try_into().unwrap(),
@@ -279,21 +313,31 @@ fn main() {
                     (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // 00b0f0
                 ),
             );
+            if if USE_FULL_ITERATIONS {state3.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+                break;
+            }
+            iteration += 1;
         }
-        if state4.turn_index >= turns.len() {
-            turns = next_turn_sequence(&turns);
-        }
-        while state4.turn_index < turns.len() {
-            update(
-                &mut framebuffer,
-                WIDTH.try_into().unwrap(),
-                HEIGHT.try_into().unwrap(),
-                SEGMENT_LENGTH,
-                &mut state4,
-                &turns,
-                &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
-            );
-        }
+
+        // if state4.turn_index >= turns.len() {
+        //     turns = next_turn_sequence(&turns);
+        // }
+        // let mut iteration: usize = 0;
+        // loop {
+        //     update(
+        //         &mut framebuffer,
+        //         WIDTH.try_into().unwrap(),
+        //         HEIGHT.try_into().unwrap(),
+        //         SEGMENT_LENGTH,
+        //         &mut state4,
+        //         &turns,
+        //         &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
+        //     );
+        //     if if USE_FULL_ITERATIONS {state4.turn_index >= turns.len()} else {iteration >= BATCH_SIZE} {
+        //         break;
+        //     }
+        //     iteration += 1;
+        // }
         window
             .update_with_buffer(&framebuffer, WIDTH, HEIGHT)
             .unwrap();
