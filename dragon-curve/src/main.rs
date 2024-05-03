@@ -8,7 +8,7 @@ const HEIGHT: usize = 800;
 const SEGMENT_LENGTH: usize = 1;
 const INTERVAL_MILLIS: u64 = 1;
 const USE_FULL_ITERATIONS: bool = false;
-const BATCH_SIZE: usize = 10000;
+const BATCH_SIZE: usize = 1000;
 
 // colors
 const WHITE: (f64, f64, f64) = (1.0, 1.0, 1.0);
@@ -20,7 +20,6 @@ const BLUE: (f64, f64, f64) = (0.0, 0.0, 1.0);
 const MAGENTA: (f64, f64, f64) = (1.0, 0.0, 1.0);
 
 pub struct State {
-    turn_index: usize,
     position: (isize, isize),  // pixel coordinates
     direction: (isize, isize), // position + direction = next position
     segment_progress: usize,   // number of pixels into a segment
@@ -32,7 +31,6 @@ pub struct State {
 impl State{
     fn new(direction: (isize, isize)) -> State {
         return State {
-            turn_index: 0,
             position: (
                 ((WIDTH / 2) as isize).try_into().unwrap(),
                 ((HEIGHT / 2) as isize).try_into().unwrap(),
@@ -42,21 +40,6 @@ impl State{
             t: 0,
             turn_counter: 0,
             turn_state: 0,
-        };
-    }
-}
-
-impl State {
-    fn new(direction: (isize, isize)) -> State {
-        return State {
-            turn_index: 0,
-            position: (
-                ((WIDTH / 2) as isize).try_into().unwrap(),
-                ((HEIGHT / 2) as isize).try_into().unwrap(),
-            ),
-            direction: direction,
-            segment_progress: 0,
-            t: 0,
         };
     }
 }
