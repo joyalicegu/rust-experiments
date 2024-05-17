@@ -7,3 +7,11 @@ edition = "2021"
 
 [dependencies]
 minifb = "0.25.0"
+
+[workspace]
+members = [
+    "dragon-curve-wasm",
+    "run-wasm",
+]
+# so we can run dragon-curve-wasm with:
+# cargo run-wasm --release --package dragon-curve-wasm

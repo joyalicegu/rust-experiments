@@ -1,0 +1,28 @@
+[package]
+name = "dragon-curve-wasm"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jay Oster <jay@kodewerx.org>"]
+publish = false
+
+[features]
+optimize = ["log/release_max_level_warn"]
+default = ["optimize"]
+
+[dependencies]
+error-iter = "0.4"
+log = "0.4"
+pixels = "0.13.0"
+winit = "0.28"
+winit_input_helper = "0.14"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1"
+console_log = "1"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["GpuTextureFormat"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.10"
+pollster = "0.3"
