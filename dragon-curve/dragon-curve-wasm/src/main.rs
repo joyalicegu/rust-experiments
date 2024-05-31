@@ -10,45 +10,54 @@ use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
-// TODO can probably get rid of most of this stuff above this line
 // We stole most of this from:
 // https://github.com/parasyte/pixels/tree/main/examples/minimal-web
 
-const WIDTH: u32 = 1200;
-const HEIGHT: u32 = 800;
-const SEGMENT_LENGTH: usize = 1;
-const BATCH_SIZE: usize = 1000;
+const WIDTH: u32 = 2400;
+const HEIGHT: u32 = 1600;
+const SEGMENT_LENGTH: usize = 10;
+const BATCH_SIZE: usize = 100;
 
-// colors
-const WHITE: (f64, f64, f64) = (1.0, 1.0, 1.0);
-const RED: (f64, f64, f64) = (1.0, 0.0, 0.0);
-const YELLOW: (f64, f64, f64) = (1.0, 1.0, 0.0);
-const GREEN: (f64, f64, f64) = (0.0, 1.0, 0.0);
-const CYAN: (f64, f64, f64) = (0.0, 1.0, 1.0);
-const BLUE: (f64, f64, f64) = (0.0, 0.0, 1.0);
-const MAGENTA: (f64, f64, f64) = (1.0, 0.0, 1.0);
+pub struct Config {
+    width: isize,
+    height: isize,
+    segment_length: usize,
+}
 
 pub struct State {
     position: (isize, isize),  // pixel coordinates
     direction: (isize, isize), // position + direction = next position
-    segment_progress: usize,   // number of pixels into a segment
-    t: usize,                  // number of pixels into the curve
+    starting_direction: (isize, isize),
+    starting_position: (isize, isize),
+    segment_progress: usize, // number of pixels into a segment
+    t: usize,                // number of pixels into the curve
     turn_counter: i64,
     turn_state: i64,
+    gradient: Vec<GradientStop>,
+    countdown: usize, // number of iterations to wait before starting
+    duration: usize,  // number of pixels to draw before resetting
 }
 
 impl State {
-    fn new(direction: (isize, isize)) -> State {
+    fn new(
+        starting_position: (isize, isize),
+        starting_direction: (isize, isize),
+        gradient: Vec<GradientStop>,
+        countdown: usize,
+        duration: usize,
+    ) -> State {
         return State {
-            position: (
-                ((WIDTH / 2) as isize).try_into().unwrap(),
-                ((HEIGHT / 2) as isize).try_into().unwrap(),
-            ),
-            direction: direction,
+            starting_position: starting_position,
+            starting_direction: starting_direction,
+            position: starting_position,
+            direction: starting_direction,
             segment_progress: 0,
             t: 0,
             turn_counter: 0,
             turn_state: 0,
+            gradient: gradient,
+            countdown: countdown,
+            duration: duration,
         };
     }
 }
@@ -119,24 +128,33 @@ fn get_gradient_color(gradient: &Vec<GradientStop>, depth: f64) -> (f64, f64, f6
     panic!("Invalid gradient depth: {:?}", depth);
 }
 
-fn update(
-    frame: &mut [u8],
-    width: isize,
-    height: isize,
-    segment_length: usize,
-    state: &mut State,
-    gradient: &Vec<GradientStop>,
-) -> () {
+fn update(config: &Config, frame: &mut [u8], state: &mut State) -> () {
+    if state.countdown > 0 {
+        state.countdown -= 1;
+        return;
+    }
+
+    if state.duration > 0 && state.t > state.duration {
+        state.position = state.starting_position;
+        state.starting_direction = turn(turn(state.starting_direction, Turn::R), Turn::R);
+        state.direction = state.starting_direction;
+        state.segment_progress = 0;
+        state.turn_counter = 0;
+        state.turn_state = 0;
+        state.t = 0;
+    }
+
     let mut d = (state.t as f64 + 1.0).log2();
     d -= d.floor();
-    let color = get_gradient_color(&gradient, d);
+    let color = get_gradient_color(&state.gradient, d);
+
     if state.position.0 >= 0
         && state.position.1 >= 0
-        && state.position.0 < width
-        && state.position.1 < height
+        && state.position.0 < config.width
+        && state.position.1 < config.height
     {
         let rgba = to_rgba(color);
-        let i = ((state.position.0 + state.position.1 * width) * 4) as usize;
+        let i = ((state.position.0 + state.position.1 * config.width) * 4) as usize;
         frame[i..(i + 4)].copy_from_slice(&rgba);
     }
     // update state
@@ -145,7 +163,7 @@ fn update(
 
     state.position.0 += state.direction.0;
     state.position.1 += state.direction.1;
-    if state.segment_progress >= segment_length {
+    if state.segment_progress >= config.segment_length {
         // bits that differ when you increment the turn counter
         let bits = state.turn_counter ^ (state.turn_counter + 1);
         // most significant bit
@@ -248,51 +266,60 @@ async fn run() {
             .expect("Pixels error")
     };
 
-    // initialize state
-    let mut state = State::new((1, 0));
-    let mut state2 = State::new((0, 1));
-    let mut state3 = State::new((-1, 0));
-    let mut state4 = State::new((0, -1));
-    let _solid_gradient = vec![
-        GradientStop {
-            depth: 0.0,
-            color: WHITE,
-        },
-        GradientStop {
-            depth: 1.0,
-            color: WHITE,
-        },
-    ];
+    let config = Config {
+        width: WIDTH.try_into().unwrap(),
+        height: HEIGHT.try_into().unwrap(),
+        segment_length: SEGMENT_LENGTH,
+    };
 
-    let _hsv_gradient = vec![
-        GradientStop {
-            depth: 0.0,
-            color: RED,
-        },
-        GradientStop {
-            depth: 1.0 / 6.0,
-            color: YELLOW,
-        },
-        GradientStop {
-            depth: 2.0 / 6.0,
-            color: GREEN,
-        },
-        GradientStop {
-            depth: 3.0 / 6.0,
-            color: CYAN,
-        },
-        GradientStop {
-            depth: 4.0 / 6.0,
-            color: BLUE,
-        },
-        GradientStop {
-            depth: 5.0 / 6.0,
-            color: MAGENTA,
-        },
-        GradientStop {
-            depth: 1.0,
-            color: RED,
-        },
+    let screen_center: (isize, isize) = (
+        ((config.width / 2) as isize).try_into().unwrap(),
+        ((config.height / 2) as isize).try_into().unwrap(),
+    );
+
+    // initialize states
+    let mut states: Vec<State> = vec![
+        State::new(
+            screen_center,
+            (1, 0),
+            two_color_gradient(
+                (255.0 / 255.0, 0.0, 0.0),           // red
+                (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
+            ),
+            0,
+            50000,
+        ),
+        State::new(
+            screen_center,
+            (0, 1),
+            two_color_gradient(
+                (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
+                (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
+            ),
+            10000,
+            25000,
+        ),
+        State::new(
+            screen_center,
+            (-1, 0),
+            two_color_gradient(
+                (
+                    153.0 / 255.0 / 5.0,
+                    204.0 / 255.0 / 5.0,
+                    255.0 / 255.0 / 5.0,
+                ),
+                (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // #00b0f0
+            ),
+            0,
+            50000,
+        ),
+        State::new(
+            screen_center,
+            (0, -1),
+            two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
+            10000,
+            25000,
+        ),
     ];
 
     event_loop.run(move |event, _, control_flow| {
@@ -324,54 +351,9 @@ async fn run() {
 
             // Update internal state
             for _ in 0..BATCH_SIZE {
-                update(
-                    pixels.frame_mut(),
-                    WIDTH.try_into().unwrap(),
-                    HEIGHT.try_into().unwrap(),
-                    SEGMENT_LENGTH,
-                    &mut state,
-                    &two_color_gradient(
-                        RED,
-                        (255.0 / 255.0, 136.0 / 255.0, 0.0), // orange
-                    ),
-                );
-
-                update(
-                    pixels.frame_mut(),
-                    WIDTH.try_into().unwrap(),
-                    HEIGHT.try_into().unwrap(),
-                    SEGMENT_LENGTH,
-                    &mut state2,
-                    &two_color_gradient(
-                        (80.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0), // blurple
-                        (187.0 / 255.0, 0.0, 80.0 / 255.0),         // pinkish
-                    ),
-                );
-
-                update(
-                    pixels.frame_mut(),
-                    WIDTH.try_into().unwrap(),
-                    HEIGHT.try_into().unwrap(),
-                    SEGMENT_LENGTH,
-                    &mut state3,
-                    &two_color_gradient(
-                        (
-                            153.0 / 255.0 / 5.0,
-                            204.0 / 255.0 / 5.0,
-                            255.0 / 255.0 / 5.0,
-                        ),
-                        (0.0 / 255.0, 176.0 / 255.0, 240.0 / 255.0), // 00b0f0
-                    ),
-                );
-
-                update(
-                    pixels.frame_mut(),
-                    WIDTH.try_into().unwrap(),
-                    HEIGHT.try_into().unwrap(),
-                    SEGMENT_LENGTH,
-                    &mut state4,
-                    &two_color_gradient((0.1, 0.1, 0.1), (0.6, 0.6, 0.6)),
-                );
+                for state in states.iter_mut() {
+                    update(&config, pixels.frame_mut(), state);
+                }
             }
             // and request a redraw
             window.request_redraw();
