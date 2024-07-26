@@ -131,11 +131,17 @@ fn main() {
                     let ax = dir_x * day - dir_y * dax;
                     let az = dir_x * day - dir_y * dax;
 
-                    sticker.set_transformation(Mat4::from_translation(vec3(
-                        CUBE_SPACING * (x as f32) + (dir_x as f32) * CUBE_SPACING / 2.0,
-                        CUBE_SPACING * (y as f32) + (dir_y as f32) * CUBE_SPACING / 2.0,
-                        CUBE_SPACING * (z as f32) + (dir_z as f32) * CUBE_SPACING / 2.0,
-                    )) * Mat4::from_nonuniform_scale(dir_to_thickness(dir_x) / STICKER_WIDTH, dir_to_thickness(dir_y) / STICKER_WIDTH, dir_to_thickness(dir_z) / STICKER_WIDTH));
+                    sticker.set_transformation(
+                        Mat4::from_translation(vec3(
+                            CUBE_SPACING * (x as f32) + (dir_x as f32) * CUBE_SPACING / 2.0,
+                            CUBE_SPACING * (y as f32) + (dir_y as f32) * CUBE_SPACING / 2.0,
+                            CUBE_SPACING * (z as f32) + (dir_z as f32) * CUBE_SPACING / 2.0,
+                        )) * Mat4::from_nonuniform_scale(
+                            dir_to_thickness(dir_x) / STICKER_WIDTH,
+                            dir_to_thickness(dir_y) / STICKER_WIDTH,
+                            dir_to_thickness(dir_z) / STICKER_WIDTH,
+                        ),
+                    );
 
                     stickers.push(sticker);
 
